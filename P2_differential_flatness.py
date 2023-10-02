@@ -73,53 +73,6 @@ def compute_controls(traj: np.ndarray) -> T.Tuple[np.ndarray, np.ndarray]:
 
     return V, om
 
-def interpolate_traj(
-    traj: np.ndarray,
-    tau: np.ndarray,
-    V_tilde: np.ndarray,
-    om_tilde: np.ndarray,
-    dt: float,
-    s_f: State
-) -> T.Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Inputs:
-        traj (np.array [N,7]) original unscaled trajectory
-        tau (np.array [N]) rescaled time at orignal traj points
-        V_tilde (np.array [N]) new velocities to use
-        om_tilde (np.array [N]) new rotational velocities to use
-        dt (float) timestep for interpolation
-        s_f (State) final state
-
-    Outputs:
-        t_new (np.array [N_new]) new timepoints spaced dt apart
-        V_scaled (np.array [N_new])
-        om_scaled (np.array [N_new])
-        traj_scaled (np.array [N_new, 7]) new rescaled traj at these timepoints
-    """
-    # Get new final time
-    tf_new = tau[-1]
-
-    # Generate new uniform time grid
-    N_new = int(tf_new/dt)
-    t_new = dt*np.array(range(N_new+1))
-
-    # Interpolate for state trajectory
-    traj_scaled = np.zeros((N_new+1,7))
-    traj_scaled[:,0] = np.interp(t_new,tau,traj[:,0])   # x
-    traj_scaled[:,1] = np.interp(t_new,tau,traj[:,1])   # y
-    traj_scaled[:,2] = np.interp(t_new,tau,traj[:,2])   # th
-    # Interpolate for scaled velocities
-    V_scaled = np.interp(t_new, tau, V_tilde)           # V
-    om_scaled = np.interp(t_new, tau, om_tilde)         # om
-    # Compute xy velocities
-    traj_scaled[:,3] = V_scaled*np.cos(traj_scaled[:,2])    # xd
-    traj_scaled[:,4] = V_scaled*np.sin(traj_scaled[:,2])    # yd
-    # Compute xy acclerations
-    traj_scaled[:,5] = np.append(np.diff(traj_scaled[:,3])/dt,-s_f.V*om_scaled[-1]*np.sin(s_f.th)) # xdd
-    traj_scaled[:,6] = np.append(np.diff(traj_scaled[:,4])/dt, s_f.V*om_scaled[-1]*np.cos(s_f.th)) # ydd
-
-    return t_new, V_scaled, om_scaled, traj_scaled
-
 if __name__ == "__main__":
     # Constants
     tf = 25.
