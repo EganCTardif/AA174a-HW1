@@ -62,6 +62,26 @@ class TrajectoryTracker:
         x_d, xd_d, xdd_d, y_d, yd_d, ydd_d = self.get_desired_state(t)
 
         ########## Code starts here ##########
+         # Tracking errors
+        ex = x_d - x  # Position error in x
+        ey = y_d - y  # Position error in y
+
+        # Desired velocities
+        Vx = self.V_prev * np.cos(th)
+        Vy = self.V_prev * np.sin(th)
+
+        # PD control for x and y accelerations (virtual controls)
+        u1 = xdd_d + self.kpx * ex + self.kdx * (xd_d - Vx)
+        u2 = ydd_d + self.kpy * ey + self.kdy * (yd_d - Vy)
+
+        # Compute control inputs
+        V = np.sqrt(u1**2 + u2**2)
+
+        # Avoid division by zero in the case of V being too small
+        if V < V_PREV_THRES:
+            V = V_PREV_THRES
+
+        om = (u2 * np.cos(th) - u1 * np.sin(th)) / V
 
         ########## Code ends here ##########
 
